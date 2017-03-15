@@ -156,7 +156,6 @@ class duanWechat(object):
                           + filtered_hits[0]['_source']['answer'] + '\n' \
                           + "<a href=\"" + filtered_hits[0]['_source']['href'] + "\">【知识来源:段涛大夫" + \
                           filtered_hits[0]['_source']['title'] + "】</a>"
-                print(answer)
                 self.wechat.send_text_message(user, answer)
                 content = replyConfig['interesting'] + "\n" \
                           + '1.' + filtered_hits[1]['_source']['question'] + '\n' \
@@ -184,7 +183,12 @@ class duanWechat(object):
                                               , filtered_hits[i]['_source']['answer']
                                               , filtered_hits[i]['_source']['title']
                                               , filtered_hits[i]['_source']['href'])
-
+        elif len(filtered_hits) == 1:
+            redisServer.clearUserSearch(user)
+            content = filtered_hits[0]['_source']['question'] + '\n' \
+                      + filtered_hits[0]['_source']['answer'] + '\n' \
+                      + "<a href=\"" + filtered_hits[0]['_source']['href'] + "\">【知识来源:段涛大夫" + \
+                      filtered_hits[0]['_source']['title'] + "】</a>"
         elif len(filtered_hits) > 0:
             redisServer.clearUserSearch(user)
             if maxScore > 100:
