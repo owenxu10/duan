@@ -69,9 +69,9 @@ class duanWechat(object):
                         reply = replyConfig["greeting"]
 
                     else:
-                        reply, result = self.searchQuestion(user, content)
+                        reply, answerID, questionIDs = self.searchQuestion(user, content)
                         # log_server
-                        log.writeLog(user, content, result)
+                        log.writeLog(user, content, answerID, questionIDs)
 
                 resp.status = falcon.HTTP_200
                 resp.body = self.wechat.response_text(content=reply)
@@ -93,10 +93,10 @@ class duanWechat(object):
             resp.body = ""
 
     def searchQuestion(self, user, question):
-        result = True
+        questionIDs = []
+        answerID = ''
         # handleQuestion
         (question_sequence, question, period) = handleQuestion(question)
-
         query_data = {
             "query": {
                 "bool": {
@@ -152,79 +152,75 @@ class duanWechat(object):
             redisServer.clearUserSearch(user)
             print(maxScore)
             if maxScore > 100:
-                answer = filtered_hits[0]['_source']['question'] + '\n' \
-                          + filtered_hits[0]['_source']['answer'] + '\n' \
+                answer =  getReply(filtered_hits[0]['_source']['answer']) + '\n' \
                           + "<a href=\"" + filtered_hits[0]['_source']['href'] + "\">【知识来源:段涛大夫" + \
                           filtered_hits[0]['_source']['title'] + "】</a>"
+                answerID = filtered_hits[0]['_id']
                 self.wechat.send_text_message(user, answer)
                 content = replyConfig['interesting'] + "\n" \
-                          + '1.' + filtered_hits[1]['_source']['question'] + '\n' \
-                          + '2.' + filtered_hits[2]['_source']['question'] + '\n' \
-                          + '3.' + filtered_hits[3]['_source']['question'] + '\n' \
-                          + '4.' + filtered_hits[4]['_source']['question'] + "\n" \
-                          + '5.' + filtered_hits[5]['_source']['question'] + "\n" \
+                          + '1.' + filtered_hits[1]['_source']['question'].strip() + '\n' \
+                          + '2.' + filtered_hits[2]['_source']['question'].strip() + '\n' \
+                          + '3.' + filtered_hits[3]['_source']['question'].strip() + '\n' \
+                          + '4.' + filtered_hits[4]['_source']['question'].strip() + "\n" \
+                          + '5.' + filtered_hits[5]['_source']['question'].strip() + "\n" \
                           + "(若是，请输入问题前面的数字)"
                 for i in range(1, 6):
-                    redisServer.setUserSearch(user, filtered_hits[i]['_source']['question']
+                    redisServer.setUserSearch(user, filtered_hits[i]['_source']['question'].strip()
                                               , filtered_hits[i]['_source']['answer']
                                               , filtered_hits[i]['_source']['title']
                                               , filtered_hits[i]['_source']['href'])
+                    questionIDs.append(filtered_hits[i]['_id'])
 
             else:
                 content = replyConfig['exist'] + "\n" \
-                          + '1.' + filtered_hits[0]['_source']['question'] + '\n' \
-                          + '2.' + filtered_hits[1]['_source']['question'] + '\n' \
-                          + '3.' + filtered_hits[2]['_source']['question'] + '\n' \
-                          + '4.' + filtered_hits[3]['_source']['question'] + "\n" \
-                          + '5.' + filtered_hits[4]['_source']['question'] + "\n" \
+                          + '1.' + filtered_hits[0]['_source']['question'].strip() + '\n' \
+                          + '2.' + filtered_hits[1]['_source']['question'].strip() + '\n' \
+                          + '3.' + filtered_hits[2]['_source']['question'].strip() + '\n' \
+                          + '4.' + filtered_hits[3]['_source']['question'].strip() + "\n" \
+                          + '5.' + filtered_hits[4]['_source']['question'].strip() + "\n" \
                           + "(若是，请输入问题前面的数字)"
                 for i in range(0, 5):
-                    redisServer.setUserSearch(user, filtered_hits[i]['_source']['question']
+                    redisServer.setUserSearch(user, filtered_hits[i]['_source']['question'].strip()
                                               , filtered_hits[i]['_source']['answer']
                                               , filtered_hits[i]['_source']['title']
                                               , filtered_hits[i]['_source']['href'])
-        elif len(filtered_hits) == 1:
-            redisServer.clearUserSearch(user)
-            content = filtered_hits[0]['_source']['question'] + '\n' \
-                      + filtered_hits[0]['_source']['answer'] + '\n' \
-                      + "<a href=\"" + filtered_hits[0]['_source']['href'] + "\">【知识来源:段涛大夫" + \
-                      filtered_hits[0]['_source']['title'] + "】</a>"
+                    questionIDs.append(filtered_hits[i]['_id'])
         elif len(filtered_hits) > 0:
             redisServer.clearUserSearch(user)
             if maxScore > 100:
-                answer = filtered_hits[0]['_source']['question'] + '\n' \
-                          + filtered_hits[0]['_source']['answer'] + '\n' \
+                answer = getReply(filtered_hits[0]['_source']['answer']) + '\n' \
                           + "<a href=\"" + filtered_hits[0]['_source']['href'] + "\">【知识来源:段涛大夫" + \
                           filtered_hits[0]['_source']['title'] + "】</a>"
-
+                answerID = filtered_hits[0]['_id']
                 self.wechat.send_text_message(user, answer)
                 content = replyConfig['interesting'] + "\n"
                 index = 1
                 for index in range(1,len(filtered_hits)):
-                    content = content + str(index) + '.' + filtered_hits[index]['_source']['question'] + "\n"
+                    content = content + str(index) + '.' + filtered_hits[index]['_source']['question'].strip() + "\n"
                     index += 1
                 content = content + "(若是，请输入问题前面的数字)"
                 for i in range(1, len(filtered_hits)):
-                    redisServer.setUserSearch(user, filtered_hits[i]['_source']['question']
+                    redisServer.setUserSearch(user, filtered_hits[i]['_source']['question'].strip()
                                               , filtered_hits[i]['_source']['answer']
                                               , filtered_hits[i]['_source']['title']
                                               , filtered_hits[i]['_source']['href'])
+                    questionIDs.append(filtered_hits[i]['_id'])
             else:
                 content = replyConfig['exist'] + "\n"
                 index = 1
                 for filtered_hit in filtered_hits:
-                    content = content + str(index) + '.' + filtered_hit['_source']['question'] + "\n"
+                    content = content + str(index) + '.' + filtered_hit['_source']['question'].strip() + "\n"
                     index += 1
                 content = content + "(若是，请输入问题前面的数字)"
                 for i in range(0, len(filtered_hits)):
-                    redisServer.setUserSearch(user, filtered_hits[i]['_source']['question']
+                    redisServer.setUserSearch(user, filtered_hits[i]['_source']['question'].strip()
                                               , filtered_hits[i]['_source']['answer']
                                               , filtered_hits[i]['_source']['title']
                                               , filtered_hits[i]['_source']['href'])
+                    questionIDs.append(filtered_hits[i]['_id'])
         else:
             content = replyConfig['not_found']
-            result = False
-        return content, result
+        return content, answerID, questionIDs
 
     # say hello at first time
     def sayHello(self, user, today, createdTime):

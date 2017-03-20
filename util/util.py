@@ -57,7 +57,7 @@ def getReply(*texts):
         href = texts[2]
         title = texts[3]
         reply = question + '\n' + answer + '\n' + "<a href=\"" + href + "\">【知识来源:段涛大夫" + title + "】</a>"
-        while len(reply.encode("utf-8")) > 2048:
+        while len(reply.encode("utf-8")) > 2000:
             print("answer==",answer)
             answer = answer[0:-3]+"……"
             reply = question + '\n' + answer + '\n' + "<a href=\"" + href + "\">【知识来源:段涛大夫" + title + "】</a>"
@@ -66,9 +66,16 @@ def getReply(*texts):
         question = texts[0]
         answer = texts[1]
         reply = question + '\n' + answer
-        while len(reply.encode("utf-8")) > 2048:
+        while len(reply.encode("utf-8")) > 2000:
             answer = answer[0:-3] + "……"
             reply = question + '\n' + answer + '\n'
+
+    elif len(texts) == 1:
+        answer = texts[0]
+        reply = answer
+        while len(reply.encode("utf-8")) > 1500:
+            answer = answer[0:-3] + "……"
+            reply = answer
 
     return reply
 

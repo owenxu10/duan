@@ -9,7 +9,7 @@ import time
 es = Elasticsearch()
 questions = [];
 answers = [];
-wb = load_workbook('dt.xlsx')
+wb = load_workbook('./excels/dt.xlsx')
 sheet_names = wb.get_sheet_names()
 ws = wb[sheet_names[0]]
 
@@ -73,9 +73,9 @@ def create_mapping():
 def upload(question, answer, title, href, period):
     print(locals())
     res = es.index(index='qa_demo', doc_type='qa', body={
-        'question': question,
-        'answer': answer,
-        'title': title,
+        'question': question.strip(),
+        'answer': answer.strip(),
+        'title': title.strip(),
         'href': href,
         'period': period
     })
@@ -172,6 +172,7 @@ def processPeriod(period_origin):
 
 
 if __name__ == '__main__':
+    confirm = input("运行后会删除知识库，会造成先前log无法使用")
     delete_es()
     create_mapping()
     read_xls_1(ws)
