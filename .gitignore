@@ -98,3 +98,4 @@ dump.rdb
 excels/
 log/
 log_server/
+config.py

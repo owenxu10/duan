@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import urllib.request
 import time, json
 
-es = Elasticsearch(hosts='127.0.0.1')
+es = Elasticsearch()
 questions = [];
 answers = [];
 wb = load_workbook('./excels/dt.xlsx')
@@ -73,10 +73,12 @@ def create_mapping():
 def upload(question, answer, title, href, period):
     print(locals())
     print(question.strip())
+    if title != None:
+        title = title.strip()
     res = es.index(index='qa_demo', doc_type='qa', body={
         'question': question.strip(),
         'answer': answer.strip(),
-        'title': title.strip(),
+        'title': title,
         'href': href,
         'period': period
     })
@@ -87,10 +89,22 @@ def checkSame(question, answer):
     noSame = True
     query_all = {
         "query": {
-            "dis_max": {
-                "queries": [
-                    {"match_phrase": {"question": question}},
-                    {"match_phrase": {"answer": answer}}
+            "bool": {
+                "should": [
+                    {
+                        "match_phrase": {
+                            "question": {
+                                "query": question
+                            }
+                        }
+                    },
+                    {
+                        "match_phrase": {
+                            "answer": {
+                                "query": answer
+                            }
+                        }
+                    }
                 ]
             }
         }
@@ -106,42 +120,16 @@ def getTitle(source):
     response = urllib.request.urlopen(source)
     time.sleep(1)
     soup = BeautifulSoup(response.read(), 'lxml')
-    title = u"《" + soup.select('h2.rich_media_title')[0].text.strip() + u"》"
+    try:
+        title = u"《" + soup.select('h2.rich_media_title')[0].text.strip() + u"》"
+    except:
+        title = None
     return title
 
 
-def read_xls_1(ws):
-    for i in range(7, 758):
-
-        question = ws.cell(row=i, column=10).value  # start question
-        answer = ws.cell(row=i, column=11).value  # start answer
-        source = ws.cell(row=i, column=12).value  # start hyperlink
-        period = processPeriod(ws.cell(row=i, column=1).value)
-
-        if ws.cell(row=i, column=12).hyperlink == None:
-            soup = BeautifulSoup(source, "lxml")
-
-            if soup.a == None:
-                href = None
-                title = source[source.index(u'《'): source.index(u'》') + 1]
-                # print title
-            else:
-                href = soup.a['href']
-                origin_title = soup.a.text
-                title = origin_title[origin_title.index(u'《'): origin_title.index(u'》') + 1]
-        else:
-            href = ws.cell(row=i, column=12).hyperlink.display
-            origin_title = ws.cell(row=i, column=12).value
-            title = origin_title[origin_title.index(u'《'): origin_title.index(u'》') + 1]
-
-        # True- no same, False -same
-        if checkSame(question, answer):
-            upload(question, answer, title, href, period)
-
-
-# new data from 758
-def read_xls_2(ws):
-    for i in range(758, ws.max_row + 1):
+def read_xls(ws):
+    index = 0
+    for i in range(841, ws.max_row + 1):
         question = ws.cell(row=i, column=10).value  # start question
         answer = ws.cell(row=i, column=11).value  # start answer
         source = ws.cell(row=i, column=12).value  # start hyperlink
@@ -152,9 +140,11 @@ def read_xls_2(ws):
 
         if source != None:
             title = getTitle(source)
-
+        print(question)
         # True- no same, False -same
         if checkSame(question, answer):
+            index += 1
+            print(index)
             upload(question, answer, title, source, period)
 
 
@@ -185,8 +175,4 @@ def processPeriod(period_origin):
 
 
 if __name__ == '__main__':
-    # confirm = input("运行后会删除知识库，会造成先前log无法使用")
-    # delete_es()
-    # create_mapping()
-    # read_xls_1(ws)
-    read_xls_2(ws)
+    read_xls(ws)

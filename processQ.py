@@ -99,6 +99,7 @@ for sheet in range(0, sheet_num):
 
             filtered_hits, maxScore, took = afterSearch(res, period)
 
+            ws.cell(row=i, column=3).value = maxScore
             if (len(filtered_hits) >= 5):
                 content = excelConfig['exist'] + "\n\n" \
                           + filtered_hits[0]['_source']['question'] + '\n' \

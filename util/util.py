@@ -9,23 +9,31 @@ def findGreeting(question):
     else:
         return False
 
+def findThanks(question):
+    question = question.strip()
+    return bool(re.search("^谢谢.*",question))
+
+
 def handleQuestion(question):
     question_sequence = ''
     period = ''
-    print("question",question)
-    question_tmp = re.sub(r'怀孕|孕期|孕妇', '', question)
+    isSub = False
+
+    question_tmp = re.sub(r'怀孕|孕期|孕妇|什么', '', question)
     if len(question_tmp) > 0:
         question = question_tmp
+    if len(question_tmp) == len(question):
+        isSub = True
 
     # question = [word for word, flag in posseg.cut(question) if flag != 'a' and flag != 'd']
     # question = ''.join(question)
     # print("question:", question)
 
-    question_filted = re.sub(r'注意事项|新生儿|比较好|可以|吗|咋|怎么办|如何|怎么|哪些|会|什么|和|能|或|有|怎么样|要不要|还|了|很|有点|都|厉害|严重|稍微|有一点|，|,|。', '',
+    question_filted = re.sub(r'注意事项|不是|新生儿|比较好|可以|吗|咋|怎么办|如何|怎么|哪些|会|和|能|或|有|怎么样|要不要|还|了|很|有点|都|厉害|严重|稍微|有一点|，|,|。', '',
                              question)
     question_sequence, period = process(question_filted)
-
-    return (question_sequence, question, period)
+    print("question", question_sequence)
+    return (question_sequence, question, period, isSub)
 
 
 def filter_list(list, period, maxScore):
@@ -58,7 +66,6 @@ def getReply(*texts):
         title = texts[3]
         reply = question + '\n' + answer + '\n' + "<a href=\"" + href + "\">【知识来源:段涛大夫" + title + "】</a>"
         while len(reply.encode("utf-8")) > 2000:
-            print("answer==",answer)
             answer = answer[0:-3]+"……"
             reply = question + '\n' + answer + '\n' + "<a href=\"" + href + "\">【知识来源:段涛大夫" + title + "】</a>"
 

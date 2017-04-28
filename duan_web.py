@@ -18,7 +18,7 @@ class duanWeb(object):
         question = json_data['question']
         results = ''
         # handleQuestion
-        (question_sequence, question, period) = handleQuestion(question)
+        (question_sequence, question, period,isSub) = handleQuestion(question)
 
         query_data = {
             "query": {
