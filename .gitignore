@@ -99,3 +99,5 @@ excels/
 log/
 log_server/
 config.py
+log_archive/
+log_tuijian/
