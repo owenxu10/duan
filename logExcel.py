@@ -8,6 +8,7 @@ import json
 from elasticsearch import Elasticsearch
 from util.util import handleQuestion, afterSearch
 
+
 def style_range(ws):
     border = Border(left=Side(style='thin', color='FF99C4E6'),
                     right=Side(style='thin', color='FF99C4E6'),
@@ -20,11 +21,17 @@ def style_range(ws):
             ws.cell(column=col, row=row).border = border
             ws.cell(column=col, row=row).fill = fill
 
+
 def logFiles(rootdir):
     files = []
+    dict = {}
     for parent, dirnames, filenames in os.walk(rootdir):
         for filename in filenames:
-            files.append(os.path.join(parent, filename))
+            num = int(re.match(r'\.\/log_server\/history\.log\.(\d*)', os.path.join(parent, filename)).group(1))
+            dict[os.path.join(parent, filename)] = num
+    dicts = sorted(dict.items(), key=lambda d: d[1])
+    for dict in dicts:
+        files.append(dict[0])
     return files
 
 
@@ -60,6 +67,7 @@ def getSearchResult(answer, questions):
             searchResult = searchResult + str(i + 1) + '.' + hits[i]['_source']['question'] + '\n'
 
     return searchResult + answer + questions
+
 
 def getRealTimeResult(question):
     group = re.search("(?:\d*)](.*)", question)
@@ -129,7 +137,7 @@ def getRealTimeResult(question):
             print(filtered_hits[0]['_source'])
             if filtered_hits[0]['_source']['href'] != None:
                 answer = filtered_hits[0]['_source']['answer'] + '\n' \
-                + "【知识来源:段涛大夫" + filtered_hits[0]['_source']['title'] + "】"
+                         + "【知识来源:段涛大夫" + filtered_hits[0]['_source']['title'] + "】"
             content = answer + "\n\n" \
                       + '1.' + filtered_hits[1]['_source']['question'].strip() + '\n' \
                       + '2.' + filtered_hits[2]['_source']['question'].strip() + '\n' \
@@ -149,7 +157,7 @@ def getRealTimeResult(question):
         if maxScore > bar:
             if filtered_hits[0]['_source']['href'] != None:
                 content = filtered_hits[0]['_source']['answer'] + '\n' \
-                      + "【知识来源:段涛大夫" + filtered_hits[0]['_source']['title'] + "】"
+                          + "【知识来源:段涛大夫" + filtered_hits[0]['_source']['title'] + "】"
         else:
 
             index = 1
@@ -161,7 +169,7 @@ def getRealTimeResult(question):
             print(filtered_hits[0]['_source'])
             if filtered_hits[0]['_source']['href'] != None:
                 answer = filtered_hits[0]['_source']['answer'] + '\n' \
-                     + "【知识来源:段涛大夫" + filtered_hits[0]['_source']['title'] + "】"
+                         + "【知识来源:段涛大夫" + filtered_hits[0]['_source']['title'] + "】"
 
             content = answer + "\n\n"
             index = 1
@@ -176,6 +184,7 @@ def getRealTimeResult(question):
                 index += 1
 
     return content
+
 
 def readLogs(files):
     currentDate = 0
@@ -236,7 +245,7 @@ def readLogs(files):
                         ws.cell(column=1, row=i + 4).value = ll_suc[i]
 
                         result = getRealTimeResult(ll_suc[i])
-                        #getSearchResult(ll_suc_answer[i], ll_suc_questions[i])
+                        # getSearchResult(ll_suc_answer[i], ll_suc_questions[i])
                         ws.cell(column=2, row=i + 4).value = result
                     for i in range(0, len(ll_fail)):
                         ws.cell(column=3, row=i + 4).value = ll_fail[i]
@@ -300,6 +309,8 @@ def readLogs(files):
 
 if __name__ == "__main__":
     wb = Workbook()
-    rootdir = "./log_archive"  # log directory
-    files = logFiles(rootdir)
+
+    rootdir = './log_server'  # log direcory
+    files= logFiles(rootdir)
+    print(files[::-1])
     readLogs(files)

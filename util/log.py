@@ -49,7 +49,7 @@ class log:
     @classmethod
     def writeLog(cls, user, question, answerID, maxScore, questionIDs):
         questions = ""
-        question = question.replace("\n", "")
+        question = question.replace("\n\t", "")
         for i in range(0, len(questionIDs)):
             if i == 0:
                 questions = questionIDs[0]
